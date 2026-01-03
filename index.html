@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Source Writer</title>
+    <title>Gemini Source Writer (Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -15,13 +15,13 @@
         .prose h2 { font-size: 1.5em; font-weight: 700; margin-top: 1.5em; margin-bottom: 0.5em; color: #334155; background: #e2e8f0; padding: 0.5em; border-left: 5px solid #6366f1; }
         .prose h3 { font-size: 1.25em; font-weight: 600; margin-top: 1.2em; margin-bottom: 0.5em; color: #475569; border-bottom: 1px solid #e2e8f0; }
         .prose p { margin-bottom: 1em; line-height: 1.8; }
-        .prose ul, .prose ol { padding-left: 1.5em; margin-bottom: 1em; }
-        .prose li { margin-bottom: 0.5em; }
-
+        .prose ul, .prose ol { padding-left: 1.5em; margin-bottom: 1em; list-style: disc; }
+        
         /* Custom UI */
         .glass-panel { background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: bold; }
-        .tab-inactive { color: #64748b; hover:text-gray-700; }
+        .tab-inactive { color: #64748b; cursor: pointer; }
+        .tab-inactive:hover { color: #334155; background-color: #f8fafc; }
         
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #6366f1; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -35,7 +35,7 @@
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <h1 class="text-xl font-bold tracking-tight text-gray-800 flex items-center gap-2">
-                <span class="text-2xl">📚</span> Source Based Writer
+                <span class="text-2xl">📚</span> Source Based Writer <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">v2.1 Fixed</span>
             </h1>
             <div class="flex items-center gap-4">
                 <button onclick="clearApiKey()" class="text-xs text-gray-400 hover:text-red-400 underline">APIキー設定</button>
@@ -49,9 +49,10 @@
         <div id="apiKeyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
             <div class="bg-white p-8 rounded-xl max-w-md w-full shadow-2xl">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">初期設定</h2>
-                <p class="text-gray-500 text-sm mb-4">Gemini APIキーを入力してください。<br>（PDF読み込みのため、Gemini 1.5 Flashを使用します）</p>
+                <p class="text-gray-500 text-sm mb-4">Gemini APIキーを入力してください。</p>
                 <input type="password" id="inputApiKey" placeholder="sk-..." class="w-full bg-gray-50 border border-gray-300 rounded px-4 py-2 mb-4 focus:border-indigo-500 outline-none">
                 <button onclick="saveApiKey()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded transition">保存して開始</button>
+                <p class="text-xs text-center mt-4 text-gray-400"><a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline">APIキーを取得する</a></p>
             </div>
         </div>
 
@@ -61,25 +62,25 @@
             
             <!-- Tabs -->
             <div class="flex justify-center mb-6 border-b border-gray-200">
-                <button onclick="switchTab('pdf')" id="tab-pdf" class="tab-active px-6 py-2 transition-colors">📄 PDF資料</button>
-                <button onclick="switchTab('text')" id="tab-text" class="tab-inactive px-6 py-2 transition-colors">📝 テキスト / URL</button>
+                <button onclick="switchTab('pdf')" id="tab-pdf" class="tab-active px-6 py-2 transition-colors w-1/2 md:w-auto">📄 PDF資料</button>
+                <button onclick="switchTab('text')" id="tab-text" class="tab-inactive px-6 py-2 transition-colors w-1/2 md:w-auto">📝 テキスト / URL</button>
             </div>
 
             <!-- PDF Input -->
             <div id="panel-pdf" class="space-y-4">
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:bg-gray-50 transition-colors relative">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:bg-gray-50 transition-colors relative h-48 flex flex-col items-center justify-center">
                     <input type="file" id="pdfFile" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this)">
                     <div id="fileLabel">
                         <span class="text-4xl block mb-2">📂</span>
-                        <span class="text-gray-500 font-bold">PDFをドラッグ＆ドロップ</span>
-                        <p class="text-xs text-gray-400 mt-2">またはクリックして選択</p>
+                        <span class="text-gray-500 font-bold">PDFをここにドロップ</span>
+                        <p class="text-xs text-gray-400 mt-2">またはクリックして選択 (10MB以下)</p>
                     </div>
                 </div>
             </div>
 
             <!-- Text/URL Input -->
             <div id="panel-text" class="space-y-4 hidden">
-                <textarea id="rawText" rows="6" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="ここに参考サイトの文章をコピペするか、資料のテキストを入力してください..."></textarea>
+                <textarea id="rawText" rows="8" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="ここに参考サイトの文章をコピペするか、資料のテキストを入力してください..."></textarea>
                 <p class="text-xs text-gray-500">※URLを入力する場合は、そのページの内容（テキスト）をコピーしてここに貼り付けるのが最も確実です。</p>
             </div>
 
@@ -93,7 +94,7 @@
 
         <!-- Status Bar -->
         <div id="statusSection" class="hidden max-w-4xl mx-auto">
-            <div class="bg-white rounded-lg p-4 flex items-center gap-4 border border-indigo-100 shadow-lg">
+            <div class="bg-white rounded-lg p-4 flex items-center gap-4 border border-indigo-100 shadow-lg animate-pulse">
                 <div class="loader"></div>
                 <div class="flex-grow">
                     <p id="statusText" class="text-sm font-bold text-indigo-600">AI AGENT IS READING...</p>
@@ -109,7 +110,7 @@
                     <span class="bg-indigo-600 text-white text-xs px-2 py-1 rounded mr-2">STEP 2</span>
                     記事タイトル案を選択
                 </h3>
-                <button onclick="resetAll()" class="text-sm text-gray-500 hover:text-indigo-600">資料選択に戻る</button>
+                <button onclick="resetAll()" class="text-sm text-gray-500 hover:text-indigo-600 bg-white border border-gray-200 px-3 py-1 rounded">やり直す</button>
             </div>
             <div id="titlesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Titles injected here -->
@@ -119,7 +120,7 @@
         <!-- Step 3: Article Generation -->
         <section id="articleSection" class="hidden fade-in max-w-5xl mx-auto space-y-6">
             <div class="flex justify-start">
-                <button onclick="backToTitles()" class="text-sm text-gray-500 hover:text-indigo-600 flex items-center gap-1">
+                <button onclick="backToTitles()" class="text-sm text-gray-500 hover:text-indigo-600 flex items-center gap-1 bg-white border border-gray-200 px-3 py-1 rounded transition-colors">
                     <span>←</span> タイトル選択に戻る
                 </button>
             </div>
@@ -128,7 +129,7 @@
                 <!-- Outline -->
                 <div class="space-y-2">
                     <div class="font-bold text-gray-700 border-b border-gray-200 pb-2">📊 記事構成案</div>
-                    <div class="glass-panel p-6 rounded-lg min-h-[400px] max-h-[600px] overflow-y-auto">
+                    <div class="glass-panel p-6 rounded-lg min-h-[400px] max-h-[600px] overflow-y-auto custom-scrollbar">
                         <div id="outlineContent" class="prose max-w-none text-sm"></div>
                     </div>
                 </div>
@@ -137,9 +138,9 @@
                 <div class="space-y-2">
                     <div class="flex justify-between items-center border-b border-gray-200 pb-2">
                         <div class="font-bold text-indigo-700">📝 記事本文</div>
-                        <button onclick="copyArticle()" class="text-xs bg-white border border-indigo-200 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50">コピー</button>
+                        <button onclick="copyArticle()" class="text-xs bg-white border border-indigo-200 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50">全文コピー</button>
                     </div>
-                    <div class="glass-panel p-6 rounded-lg min-h-[400px] max-h-[600px] overflow-y-auto">
+                    <div class="glass-panel p-6 rounded-lg min-h-[400px] max-h-[600px] overflow-y-auto custom-scrollbar">
                         <div id="articleContent" class="prose max-w-none"></div>
                     </div>
                 </div>
@@ -150,11 +151,12 @@
 
     <script>
         // --- State Management ---
-        let globalPdfBase64 = null; // Store base64 PDF
-        let globalInputType = 'text'; // 'text' or 'pdf'
+        let globalPdfBase64 = null;
+        let globalInputType = 'pdf'; 
         
         // --- API Key ---
         document.addEventListener('DOMContentLoaded', () => {
+            switchTab('pdf');
             if (!localStorage.getItem('gemini_api_key')) {
                 document.getElementById('apiKeyModal').classList.remove('hidden');
             }
@@ -168,14 +170,17 @@
         }
 
         function clearApiKey() {
-            document.getElementById('apiKeyModal').classList.remove('hidden');
+            if(confirm('APIキーを削除しますか？')) {
+                localStorage.removeItem('gemini_api_key');
+                location.reload();
+            }
         }
 
         // --- UI Logic ---
         function switchTab(type) {
             globalInputType = type;
-            document.getElementById('tab-pdf').className = type === 'pdf' ? 'tab-active px-6 py-2' : 'tab-inactive px-6 py-2';
-            document.getElementById('tab-text').className = type === 'text' ? 'tab-active px-6 py-2' : 'tab-inactive px-6 py-2';
+            document.getElementById('tab-pdf').className = type === 'pdf' ? 'tab-active px-6 py-2 transition-colors w-1/2 md:w-auto' : 'tab-inactive px-6 py-2 transition-colors w-1/2 md:w-auto';
+            document.getElementById('tab-text').className = type === 'text' ? 'tab-active px-6 py-2 transition-colors w-1/2 md:w-auto' : 'tab-inactive px-6 py-2 transition-colors w-1/2 md:w-auto';
             
             if(type === 'pdf') {
                 document.getElementById('panel-pdf').classList.remove('hidden');
@@ -189,15 +194,12 @@
         function handleFileSelect(input) {
             const file = input.files[0];
             if (file) {
-                // Check size (Gemini API limit is generous, but browser memory isn't. Limit to ~10MB safely)
                 if (file.size > 10 * 1024 * 1024) {
                     alert("ファイルサイズが大きすぎます（10MB以下推奨）");
                     return;
                 }
-
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Remove "data:application/pdf;base64," prefix
                     globalPdfBase64 = e.target.result.split(',')[1];
                     document.getElementById('fileLabel').innerHTML = `
                         <span class="text-4xl block mb-2">✅</span>
@@ -230,11 +232,17 @@
             document.getElementById('titlesSection').classList.remove('hidden');
         }
 
-        // --- Gemini API (Multimodal Support) ---
+        // --- Gemini API (Updated Model) ---
         async function callGemini(prompt, pdfData = null) {
             const apiKey = localStorage.getItem('gemini_api_key');
-            // Using 1.5-flash for document understanding capabilities
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            if (!apiKey) {
+                document.getElementById('apiKeyModal').classList.remove('hidden');
+                throw new Error("API Key missing");
+            }
+
+            // 【重要】エラー解消のためモデル名を更新
+            const modelName = "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
             let parts = [{ text: prompt }];
             
@@ -261,6 +269,9 @@
             }
 
             const data = await response.json();
+            if (!data.candidates || data.candidates.length === 0) {
+                 throw new Error("AIからの応答がありませんでした。");
+            }
             return data.candidates[0].content.parts[0].text;
         }
 
@@ -276,26 +287,29 @@
 
             const prompt = `
             あなたはプロのWeb編集者です。
-            提供された資料（PDFまたはテキスト）の内容を深く分析し、
+            提供された資料の内容を深く分析し、
             検索ユーザー（SEO）が興味を持ちそうな「記事の切り口（タイトル）」を5つ提案してください。
-
-            【分析の視点】
-            - この資料の中で最も価値がある情報は何か？
-            - 誰（ペルソナ）のどんな悩みを解決できるか？
-            - 検索されそうなキーワードは何か？
 
             【出力形式】
             JSON配列のみ（例: ["タイトル案1", "タイトル案2"...]）
-            余計な文章は一切不要です。
+            Markdownのコードブロックや余計な文章は一切含めないでください。
             `;
 
             try {
-                // Pass PDF if mode is PDF, otherwise just text prompt
                 const pdfPayload = (globalInputType === 'pdf') ? globalPdfBase64 : null;
                 const finalPrompt = (globalInputType === 'text') ? `【資料テキスト】\n${textInput}\n\n${prompt}` : prompt;
 
                 let response = await callGemini(finalPrompt, pdfPayload);
+                
+                // Clean response to extract JSON
                 response = response.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                // Fallback: If AI includes text outside JSON, try to find the array
+                const jsonMatch = response.match(/\[.*\]/s);
+                if (jsonMatch) {
+                    response = jsonMatch[0];
+                }
+
                 const titles = JSON.parse(response);
 
                 renderTitles(titles);
@@ -303,8 +317,9 @@
                 document.getElementById('titlesSection').classList.remove('hidden');
 
             } catch (e) {
-                alert("エラーが発生しました: " + e.message);
+                alert("解析エラー: " + e.message + "\nもう一度お試しください。");
                 resetAll();
+                setStatus(false);
             }
         }
 
@@ -351,7 +366,7 @@
                 document.getElementById('outlineContent').innerHTML = marked.parse(outlineMd);
 
                 // 2. Body
-                setStatus(true, "記事本文を執筆中... (Gemini 1.5 Flash)");
+                setStatus(true, "記事本文を執筆中...");
                 const bodyPrompt = `
                 以下の構成案に従って、記事本文を執筆してください。
                 
@@ -360,13 +375,11 @@
                 ${outlineMd}
 
                 【執筆ルール】
-                - 提供された資料の内容を正確に反映すること（嘘を書かない）。
-                - 資料にない情報は「一般的な知識」として補足するか、書かないこと。
+                - 提供された資料の内容を正確に反映すること。
                 - 読みやすく、専門用語を噛み砕いて解説すること。
                 - Markdown形式で出力。
                 `;
                 
-                // For the body generation, passing the PDF again ensures context is kept (Gemini API is stateless)
                 const finalBodyPrompt = (globalInputType === 'text') ? `【資料テキスト】\n${textInput}\n\n${bodyPrompt}` : bodyPrompt;
                 
                 const articleMd = await callGemini(finalBodyPrompt, pdfPayload);
